@@ -2,6 +2,7 @@ import flask
 from flask import Flask, render_template, json, jsonify, request
 import os
 import numpy as np
+import helper
 from helper import preprocessdata, get_test_json
 
 app = Flask(__name__)
