@@ -46,7 +46,7 @@ def preprocessdata( gender, married, education, self_employed, applicant_income,
 
 
 def get_test_json():
-    df = pd.read_csv("./data/train.csv")
+    df = pd.read_csv("./app/data/train.csv")
     return(df.head())
 
 #testing the the end point data
@@ -56,6 +56,7 @@ test_data = get_test_json()
 @app.route('/') # my home end point returns the main index
 def home():
 	return render_template('index.html')
+
 
 
 
