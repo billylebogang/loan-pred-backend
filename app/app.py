@@ -63,7 +63,7 @@ def home():
 @app.route('/data/test/', methods = ['GET', 'POST'])
 def test():
 	if request.method == 'GET':	
-		return(test_data.to_json(orient='records') ), 201
+		return app.response_class( response = test_data.to_json(orient='records'), status = 200, mimetype = 'application/json')
 	else:
 		'nothing found', 404
 
