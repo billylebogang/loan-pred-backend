@@ -10,6 +10,7 @@ import sklearn
 
 app = Flask(__name__)
 
+CORS(app)
 
 def preprocessdata( gender, married, education, self_employed, applicant_income, co_applicant_income, loan_amount, loan_amount_term, credit_history, property_area):
 
@@ -61,9 +62,8 @@ def home():
 
 
 
-CORS(app, support_credentials= True)
+
 @app.route('/data/test/', methods = ['GET', 'POST'])
-@cross_origin(origin ="*", headers=['Content-Type', 'Authorization'])
 def test():
 	if request.method == 'GET':	
 		return app.response_class( response = test_data.to_json(orient='records'), status = 200, mimetype = 'application/json')
@@ -75,25 +75,9 @@ def test():
 @app.route('/predict/', methods = ['GET', 'POST'] ) #the prediction point
 def predict():
 	if request.method == 'GET':
-		if len(data_) > 0:
-			return jsonify("prediction here")
-		else: 
-			'nothing found', 404
-
+		return jsonify("prediction here"), 404
 	
 	if request.method == 'POST':
-
-
-		# gender = request.form['gender']
-		# married = request.form['married']
-		# education = request.form['education']
-		# self_employed = request.form['self_employed']
-		# applicant_income = request.form['applicant_income']
-		# co_applicant_income = request.form['co_applicant_income']
-		# loan_amount = request.form['loan_amount']
-		# loan_amount_term = request.form['loan_amount_term']
-		# credit_history = request.form['credit_history']
-		# property_area = request.form['property_area']
 
 		loan_object = request.get_json()
 
@@ -107,19 +91,6 @@ def predict():
 		loan_amount_term = loan_object['Loan_Amount_Term']
 		credit_history = loan_object['Credit_History']
 		property_area = loan_object['Property_Area']
-
-		# new_object = {
-		# 	'gender':gender ,
-		# 	'married': married,
-		# 	'education': education,
-		# 	'self_employed': self_employed,
-		# 	'applicant_income': applicant_income,
-		# 	'co_applicant_income':co_applicant_income ,
-		# 	'loan_amount': loan_amount,
-		# 	'loan_amount_term': loan_amount_term,
-		# 	'credit_history': credit_history,
-		# 	'property_area': property_area
-		# }
 
 		prediction_results = preprocessdata(gender, married, education, self_employed, applicant_income, co_applicant_income, loan_amount, loan_amount_term, credit_history, property_area)
 
