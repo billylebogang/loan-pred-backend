@@ -1,5 +1,7 @@
 import flask
 from flask import Flask, render_template, json, jsonify, request
+import flask_cors
+from flask_cors import CORS, cross_origin
 import os
 import numpy as np
 import pandas as pd
@@ -14,7 +16,7 @@ def preprocessdata( gender, married, education, self_employed, applicant_income,
     if (gender.lower() == 'male'):
         gender = 1
     else:
-        gender == 0 
+        gender = 0 
    
     if (married.lower()  == 'yes'):
         married = 1
@@ -38,7 +40,7 @@ def preprocessdata( gender, married, education, self_employed, applicant_income,
 
     test_data = [[gender, married, education, self_employed, applicant_income, co_applicant_income, loan_amount, loan_amount_term, credit_history, property_area]]
 
-    trained_model = joblib.load('./model_1.pkl') #loading the model
+    trained_model = joblib.load('./app/model_1.pkl') #loading the model
 
     prediction = trained_model.predict(test_data) # making a prediction
 
@@ -59,8 +61,9 @@ def home():
 
 
 
-
+CORS(app, support_credentials= True)
 @app.route('/data/test/', methods = ['GET', 'POST'])
+@cross_origin(origin ="*", headers=['Content-Type', 'Authorization'])
 def test():
 	if request.method == 'GET':	
 		return app.response_class( response = test_data.to_json(orient='records'), status = 200, mimetype = 'application/json')
@@ -81,45 +84,59 @@ def predict():
 	if request.method == 'POST':
 
 
-		gender = request.form['gender']
-		married = request.form['married']
-		education = request.form['education']
-		self_employed = request.form['self_employed']
-		applicant_income = request.form['applicant_income']
-		co_applicant_income = request.form['co_applicant_income']
-		loan_amount = request.form['loan_amount']
-		loan_amount_term = request.form['loan_amount_term']
-		credit_history = request.form['credit_history']
-		property_area = request.form['property_area']
+		# gender = request.form['gender']
+		# married = request.form['married']
+		# education = request.form['education']
+		# self_employed = request.form['self_employed']
+		# applicant_income = request.form['applicant_income']
+		# co_applicant_income = request.form['co_applicant_income']
+		# loan_amount = request.form['loan_amount']
+		# loan_amount_term = request.form['loan_amount_term']
+		# credit_history = request.form['credit_history']
+		# property_area = request.form['property_area']
 
-		new_object = {
-			'gender':gender ,
-			'married': married,
-			'education': education,
-			'self_employed': self_employed,
-			'applicant_income': applicant_income,
-			'co_applicant_income':co_applicant_income ,
-			'loan_amount': loan_amount,
-			'loan_amount_term': loan_amount_term,
-			'credit_history': credit_history,
-			'property_area': property_area
-		}
+		loan_object = request.get_json()
+
+		gender = loan_object['Gender']
+		married = loan_object['Married']
+		education = loan_object['Education']
+		self_employed = loan_object['Self_Employed']
+		applicant_income = loan_object['ApplicantIncome']
+		co_applicant_income = loan_object['CoapplicantIncome']
+		loan_amount = loan_object['LoanAmount']
+		loan_amount_term = loan_object['Loan_Amount_Term']
+		credit_history = loan_object['Credit_History']
+		property_area = loan_object['Property_Area']
+
+		# new_object = {
+		# 	'gender':gender ,
+		# 	'married': married,
+		# 	'education': education,
+		# 	'self_employed': self_employed,
+		# 	'applicant_income': applicant_income,
+		# 	'co_applicant_income':co_applicant_income ,
+		# 	'loan_amount': loan_amount,
+		# 	'loan_amount_term': loan_amount_term,
+		# 	'credit_history': credit_history,
+		# 	'property_area': property_area
+		# }
 
 		prediction_results = preprocessdata(gender, married, education, self_employed, applicant_income, co_applicant_income, loan_amount, loan_amount_term, credit_history, property_area)
+
 
 		arr = np.array(prediction_results)
 
 		results = np.array_str(arr)
 
 		no = {
-			'loan_status':'denied'
+			'loan_status':'Approved'
 		}
 		yes = {
 			'loan_status':'Approved'
 		}	
 
 		if results[(len(results)-1)//2:(len(results)+2)//2] == 1:
-			 return jsonify(yes)
+			return jsonify(yes)
 		else:
 			return jsonify(no), 201
 
