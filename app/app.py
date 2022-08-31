@@ -1,60 +1,14 @@
-import flask
+from crypt import methods
+from unittest import result
 from flask import Flask, render_template, json, jsonify, request
-import flask_cors
 from flask_cors import CORS, cross_origin
 import os
-import numpy as np
-import pandas as pd
-import joblib
-import sklearn
+import sys
+sys.path.insert(0, './data/')
+from nc_data import user_data, jobs_data
 
 app = Flask(__name__)
 
-CORS(app)
-
-def preprocessdata( gender, married, education, self_employed, applicant_income, co_applicant_income, loan_amount, loan_amount_term, credit_history, property_area):
-
-    if (gender.lower() == 'male'):
-        gender = 1
-    else:
-        gender = 0 
-   
-    if (married.lower()  == 'yes'):
-        married = 1
-    else:
-        married = 0 
-
-    if (education.lower()  == 'graduate'):
-        education = 1
-    else:
-        education = 0 
-
-    if (self_employed.lower()  == 'yes'):
-        self_employed = 1
-    else:
-        self_employed = 0 
-
-    if (property_area.lower()  == 'urban'):
-        property_area = 1
-    else:
-        property_area = 0 
-
-    test_data = [[gender, married, education, self_employed, applicant_income, co_applicant_income, loan_amount, loan_amount_term, credit_history, property_area]]
-
-    trained_model = joblib.load('./app/model_1.pkl') #loading the model
-
-    prediction = trained_model.predict(test_data) # making a prediction
-
-    return prediction
-
-
-def get_test_json():
-    df = pd.read_csv("./app/data/train.csv")
-    return(df.head())
-
-#testing the the end point data
-
-test_data = get_test_json()
 
 @app.route('/') # my home end point returns the main index
 def home():
@@ -63,57 +17,103 @@ def home():
 
 
 
-@app.route('/data/test/', methods = ['GET', 'POST'])
-def test():
-	if request.method == 'GET':	
-		return app.response_class( response = test_data.to_json(orient='records'), status = 200, mimetype = 'application/json')
+@app.route('/users', methods = ['GET', 'POST'])
+def getUser():
+	if request.method == 'GET':
+		return jsonify(user_data)
 	else:
 		'nothing found', 404
 
 
+#get a speacific job by id
+@app.route('/users/<int:job_id>', methods=['GET'])
+def users(job_id):
 
-@app.route('/predict/', methods = ['GET', 'POST'] ) #the prediction point
-def predict():
-	if request.method == 'GET':
-		return jsonify("prediction here"), 404
+	python_user_object = (users_data["data"])
 	
-	if request.method == 'POST':
-
-		loan_object = request.get_json()
-
-		gender = loan_object['Gender']
-		married = loan_object['Married']
-		education = loan_object['Education']
-		self_employed = loan_object['Self_Employed']
-		applicant_income = loan_object['ApplicantIncome']
-		co_applicant_income = loan_object['CoapplicantIncome']
-		loan_amount = loan_object['LoanAmount']
-		loan_amount_term = loan_object['Loan_Amount_Term']
-		credit_history = loan_object['Credit_History']
-		property_area = loan_object['Property_Area']
-
-		prediction_results = preprocessdata(gender, married, education, self_employed, applicant_income, co_applicant_income, loan_amount, loan_amount_term, credit_history, property_area)
-
-
-		arr = np.array(prediction_results)
-
-		results = np.array_str(arr)
-
-		no = {
-			'loan_status':'Approved'
-		}
-		yes = {
-			'loan_status':'Approved'
-		}	
-
-		if results[(len(results)-1)//2:(len(results)+2)//2] == 1:
-			return jsonify(yes)
+	for a in python_user_object:
+		if a["id"] == job_id:
+			return (a)
 		else:
-			return jsonify(no), 201
+			return "nothing found", 404
+
+#adding a user
+@app.route('/user/newuser', methods =['POST'])
+def add_new_user():
+
+	new_user = {
+		id: request.json["id"],
+		email:request.json["email"],
+        password:request.json["password"],
+        username: request.json["username"]
+	}
+
+	user_data["data"].append(new_user)
+
+	return jsonify(user_data)
+
+
+#authenticating during log in
+@app.route('/user/authorise', methods =['POST'])
+def auth_new_user():
+
+	email = request.json["email"]
+	password = request.json["password"]
+    
+	username =  request.json["username"]
+
+	for user in user_data["data"]:
+		if username == user["username"] and password == user["passworc"]:
+			return jsonify( { result : "authorized"})
+		else:
+			return jsonify({ result: "unathorised"})
 
 
 
+#get a specific job
+@app.route('/jobs/<int:job_id>', methods=['GET'])
+def jobs(job_id):
 
+	python_job_object = (jobs_data["data"])
+	
+
+	for a in python_job_object:
+		if a["id"] == job_id:
+			return (a)
+		else:
+			return "nothing found", 404
+
+
+@app.route('/getjobs/', methods = ['GET', 'POST'])
+def get_jobs():
+	if request.method == 'GET':
+		return jsonify(jobs_data)
+	else:
+		'nothing found', 404
+
+
+#adding a job
+@app.route('/jobs/newjob', methods =['POST'])
+def add_new_job():
+
+	new_job = {
+		"id": request.json["id"],
+        "title":request.json["title"],
+        "description":request.json["description"],
+        "amount": request.json["amount"],
+        "location":request.json[ "location"],
+        "from": request.json["from"],
+        "to":request.json["to"],
+        "employer": request.json["employer"]
+	}
+
+	jobs_data["data"].append(new_job)
+
+	return jsonify(user_data)
+
+
+
+	
 
 if __name__ == "__main__":
 	app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))               

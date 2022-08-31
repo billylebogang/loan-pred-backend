@@ -4,11 +4,6 @@ MarkupSafe
 Werkzeug
 gunicorn
 itsdangerous
-nose
-#wsgiref
-numpy
-pandas
-scikit-learn
 pylint
 joblib
 flask_cors
